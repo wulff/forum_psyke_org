@@ -149,7 +149,9 @@ class acp_forums
 						'forum_password'		=> request_var('forum_password', '', true),
 						'forum_password_confirm'=> request_var('forum_password_confirm', '', true),
 						'forum_password_unset'	=> request_var('forum_password_unset', false),
-					);
+            'forum_postcount_view'	=> request_var('forum_postcount_view', 0),
+						'forum_postcount_post'	=> request_var('forum_postcount_post', 0),
+  				);
 
 					// On add, add empty forum_options... else do not consider it (not updating it)
 					if ($action == 'add')
@@ -448,6 +450,8 @@ class acp_forums
 							'forum_options'			=> 0,
 							'forum_password'		=> '',
 							'forum_password_confirm'=> '',
+              'forum_postcount_view'	=> 0,
+							'forum_postcount_post'	=> 0,
 						);
 					}
 				}
@@ -646,6 +650,8 @@ class acp_forums
 					'S_ENABLE_POST_REVIEW'		=> ($forum_data['forum_flags'] & FORUM_FLAG_POST_REVIEW) ? true : false,
 					'S_ENABLE_QUICK_REPLY'		=> ($forum_data['forum_flags'] & FORUM_FLAG_QUICK_REPLY) ? true : false,
 					'S_CAN_COPY_PERMISSIONS'	=> ($action != 'edit' || empty($forum_id) || ($auth->acl_get('a_fauth') && $auth->acl_get('a_authusers') && $auth->acl_get('a_authgroups') && $auth->acl_get('a_mauth'))) ? true : false,
+          'FORUM_POSTCOUNT_VIEW'		=> $forum_data['forum_postcount_view'],
+					'FORUM_POSTCOUNT_POST'		=> $forum_data['forum_postcount_post'],
 				));
 
 				return;

@@ -47,6 +47,21 @@ $sort_dir		= request_var('sd', 'd');
 $return_chars	= request_var('ch', ($topic_id) ? -1 : 300);
 $search_forum	= request_var('fid', array(0));
 
+$fid_ary		= array();
+$group_bypass	= 0;
+
+$sql = 'SELECT *
+  FROM ' . FORUMS_TABLE . ' f, ' . USER_GROUP_TABLE . ' ug, ' . GROUPS_TABLE . ' g 
+  WHERE f.forum_postcount_view > ' . $user->data['user_posts'] . '
+  AND ug.user_id = ' . $user->data['user_id'] . ' AND ug.group_id = g.group_id';
+$result = $db->sql_query($sql);
+while ($row = $db->sql_fetchrow($result))
+{
+  $group_bypass = $row['group_bypass_post_req'];
+  $fid_ary[] = $row['forum_id'];
+}
+$db->sql_freeresult($result);
+
 // We put login boxes for the case if search_id is egosearch or unreadposts
 // because a guest should be able to log in even if guests search is not permitted
 
@@ -514,6 +529,10 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 		$sql_where .= $db->sql_in_set(($show_results == 'posts') ? 'p.post_id' : 't.topic_id', $id_ary);
 		$sql_where .= (sizeof($ex_fid_ary)) ? ' AND (' . $db->sql_in_set('f.forum_id', $ex_fid_ary, true) . ' OR f.forum_id IS NULL)' : '';
 		$sql_where .= ($show_results == 'posts') ? $m_approve_fid_sql : str_replace(array('p.post_approved', 'p.forum_id'), array('t.topic_approved', 't.forum_id'), $m_approve_fid_sql);
+    if ($group_bypass != 1)
+    {
+    	$sql_where .= (sizeof($fid_ary)) ? ' AND ' . $db->sql_in_set('f.forum_id', $fid_ary, true) : '';
+    }
 	}
 
 	if ($show_results == 'posts')
@@ -535,10 +554,18 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 	{
 		// limit the number to 1000 for pre-made searches
 		$total_match_count--;
+    if ($group_bypass != 1)
+    {
+    	$total_match_count = $total_match_count - (count($fid_ary));
+    }
 		$l_search_matches = sprintf($user->lang['FOUND_MORE_SEARCH_MATCHES'], $total_match_count);
 	}
 	else
 	{
+		if ($group_bypass != 1)
+    {
+    	$total_match_count = $total_match_count - (count($fid_ary));
+    }
 		$l_search_matches = ($total_match_count == 1) ? sprintf($user->lang['FOUND_SEARCH_MATCH'], $total_match_count) : sprintf($user->lang['FOUND_SEARCH_MATCHES'], $total_match_count);
 	}
 
